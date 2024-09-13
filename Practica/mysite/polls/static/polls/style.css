@@ -1,0 +1,10 @@
+li a {
+    color: rgb(177, 227, 177);
+    font-size: 50px;
+}
+
+
+body {
+    background: white url("images/Dijango.webp") no-repeat center center fixed;
+    background-size: cover;
+}

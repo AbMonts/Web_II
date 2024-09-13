@@ -16,7 +16,7 @@ class Genre(models.Model):
     def __str__(self):
         return self.name
 
-# Modelo para el anime
+
 class Anime(models.Model):
     title = models.CharField(max_length=200)
     release_date = models.DateField()
@@ -27,7 +27,7 @@ class Anime(models.Model):
     def __str__(self):
         return self.title
 
-# Modelo para los personajes
+
 class Character(models.Model):
     name = models.CharField(max_length=100)
     anime = models.ForeignKey(Anime, on_delete=models.CASCADE)
