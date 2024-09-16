@@ -1,0 +1,12 @@
+.breadcrumbs {
+    background-color: #ffb6fd; /* Cambiar color de fondo */
+    color: #333; /* Cambiar color del texto */
+}
+
+h1, h2 {
+    color: #af0596; /* Cambiar color de los títulos */
+}
+
+#content-main p {
+    color: #2c3e50; /* Cambiar color del texto de los párrafos */
+}
