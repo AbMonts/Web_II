@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <form id="friend-form">
+        <div class="row">
+            {% csrf_token %}
+            {% for field in form %}
+            <div class="form-group col-4">
+                <label class="col-12">{{ field.label }}</label>
+                {{ field }}
+            </div>
+            {% endfor %}
+            <div class="col-12">
+                <!-- Contenedor de errores -->
+                <div id="error-message" class="text-danger"></div>
+            </div>
+            <div class="col text-center">
+                <input type="submit" class="btn btn-primary" value="Create Friend" />
+            </div>
+        </div>
+    </form>
+</div>
+
+<hr />
+
+<div class="container-fluid">
+    <table class="table table-striped table-sm" id="my_friends">
+        <thead>
+            <tr>
+                <th>Nick name</th>
+                <th>First name</th>
+                <th>Last name</th>
+                <th>Likes</th>
+                <th>DOB</th>
+                <th>Lives in</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for friend in friends %}
+        <tr>
+            <td>{{ friend.nick_name }}</td>
+            <td>{{ friend.first_name }}</td>
+            <td>{{ friend.last_name }}</td>
+            <td>{{ friend.likes }}</td>
+            <td>{{ friend.dob | date:"Y-m-d" }}</td>
+            <td>{{ friend.lives_in }}</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock content %}
+
+{% block javascript %}
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        // Función asincrónica para manejar el envío del formulario
+        async function handleFormSubmit(event) {
+            event.preventDefault();
+            const form = document.querySelector("#friend-form");
+            const formData = new FormData(form);
+            const errorMessageDiv = document.getElementById("error-message"); // Contenedor de mensajes de error
+
+            // Limpiar mensajes de error anteriores
+            errorMessageDiv.textContent = "";
+
+            try {
+                const response = await fetch("{% url 'post_friend' %}", {
+                    method: "POST",
+                    headers: {
+                        "X-Requested-With": "XMLHttpRequest",
+                        "X-CSRFToken": formData.get('csrfmiddlewaretoken')
+                    },
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    // Formulario procesado exitosamente
+                    const instance = JSON.parse(result.instance);
+                    const fields = instance[0]["fields"];
+                    
+                    // Limpiar el formulario y actualizar la tabla
+                    form.reset();
+                    document.querySelector("#id_nick_name").focus();
+                    
+                    const newRow = `
+                        <tr>
+                            <td>${fields["nick_name"] || ""}</td>
+                            <td>${fields["first_name"] || ""}</td>
+                            <td>${fields["last_name"] || ""}</td>
+                            <td>${fields["likes"] || ""}</td>
+                            <td>${fields["dob"] || ""}</td>
+                            <td>${fields["lives_in"] || ""}</td>
+                        </tr>
+                    `;
+                    document.querySelector("#my_friends tbody").insertAdjacentHTML("beforeend", newRow);
+                } else {
+                    // Mostrar errores específicos del formulario
+                    errorMessageDiv.textContent = Object.values(result.error).join(", ");
+                }
+            } catch (error) {
+                errorMessageDiv.textContent = "An error occurred while creating the friend.";
+                console.error("Error:", error);
+            }
+        }
+
+        // Evento de envío del formulario
+        document.getElementById("friend-form").addEventListener("submit", handleFormSubmit);
+
+        // Validación del nickname
+        async function validateNickName(e) {
+            const nickName = e.target.value; // Obtener el valor del nickname
+            const errorMessageDiv = document.getElementById("error-message"); // Contenedor de mensajes de error
+            
+            // Limpiar mensajes de error anteriores
+            errorMessageDiv.textContent = "";
+
+            try {
+                const response = await fetch("{% url 'validate_nickname' %}?nick_name=" + encodeURIComponent(nickName), {
+                    headers: { "X-Requested-With": "XMLHttpRequest" }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+
+                    if (!data.valid) {
+                        errorMessageDiv.textContent = "Nickname is already taken.";
+                        e.target.value = "";
+                        e.target.focus();
+                    }
+                } else {
+                    console.error("Error:", response.statusText);
+                }
+            } catch (error) {
+                errorMessageDiv.textContent = "An error occurred during nickname validation.";
+                console.error("Error:", error);
+            }
+        }
+
+        // Evento de validación del nickname
+        document.getElementById("id_nick_name").addEventListener("focusout", validateNickName);
+    });
+</script>
+{% endblock javascript %}
